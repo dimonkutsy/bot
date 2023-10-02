@@ -16,7 +16,7 @@ def get_text_messages(message):
 
     if message.text == '👋 Поздороваться':
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True) #создание новых кнопок
-        btn1 = types.KeyboardButton('Как стать автором на Хабре?')
+        btn1 = types.KeyboardButton('Как стать автором на Хуе?')
         btn2 = types.KeyboardButton('Правила сайта')
         btn3 = types.KeyboardButton('Советы по оформлению публикации')
         markup.add(btn1, btn2, btn3)
