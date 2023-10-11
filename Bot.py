@@ -1,5 +1,25 @@
 import telebot
 from telebot import types
 
-bot = telebot.TeleBot('6488401011:AAEWjxtd4ljpTzX_wt4bWNNp2QuT5AXQOiY')
+token = '6488401011:AAEWjxtd4ljpTzX_wt4bWNNp2QuT5AXQOiY'
+bot = telebot.TeleBot(token)
 
+@bot.message_handler(commands=['start'])
+def start_message(message):
+  bot.send_message(message.chat.id,"Я бот для графиков, пока ничаго не умею.")
+
+# Handle '/start' and '/help'
+@bot.message_handler(commands=['help', 'start'])
+def send_welcome(message):
+    bot.reply_to(message, """\
+Я пока ничаго не умею))\
+""")
+
+
+# Handle all other messages with content_type 'text' (content_types defaults to ['text'])
+@bot.message_handler(func=lambda message: True)
+def echo_message(message):
+    bot.reply_to(message, 'Отстань')
+
+
+bot.infinity_polling()
