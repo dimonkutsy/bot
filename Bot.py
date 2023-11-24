@@ -59,4 +59,8 @@ def callback(callback):
     conn.close()
     bot.send_message(callback.message.chat.id, info)
 
+<<<<<<< HEAD
 bot.polling(none_stop=True)
+=======
+bot.polling(none_stop=True)
+>>>>>>> 74f2480f1dad03ae553317f76c9c9a75037401a1
