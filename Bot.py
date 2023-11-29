@@ -1,3 +1,4 @@
+
 import telebot
 import sqlite3
 import re
@@ -103,14 +104,10 @@ def auth_enter_surname(message, name):
     surname = message.text.strip()
 
     # Проверяем введенную фамилию
+    
     if not validate_russian(surname):
         bot.reply_to(message, 'Фамилия может содержать только русские буквы. Попробуй еще раз.')
         bot.register_next_step_handler(message, auth_enter_surname, name)
-        return
-
-    # Проверка наличия пользователя в базе данных
-    if not check_user_exists(name, surname):
-        bot.send_message(message.chat.id, 'Вы не зарегистрированы. 🚫')
         return
 
     # Шаг 3: Запрос пароля пользователя
@@ -125,22 +122,10 @@ def auth_enter_password(message, name, surname):
     # Если пароль проходит все проверки, можно проводить аутентификацию в базе данных
 
     # Проверка аутентификации
-    if check_user_password(name, surname, password):
+    if check_user_exists(name, surname, password):
         bot.send_message(message.chat.id, 'Аутентификация успешна! 👍')
     else:
         bot.send_message(message.chat.id, 'Неверный пароль. Попробуй еще раз. 🚫')
-
-def check_user_password(name, surname, password):
-    conn = sqlite3.connect('bd.sql')
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE name = ? AND surname = ?", (name, surname))
-    user = cur.fetchone()
-    cur.close()
-    conn.close()
-
-    if user is not None and user[3] == password:
-        return True
-    return False
 
 # ...
 
