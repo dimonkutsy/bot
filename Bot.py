@@ -2,6 +2,7 @@
 import telebot
 import sqlite3
 import re
+from telebot import types
 
 bot = telebot.TeleBot('6453843079:AAFHVRXmYAKhssF8INHw6h4WfQ1eZv9pu_I')
 
@@ -15,6 +16,7 @@ def start(message):
     conn.close()
     bot.send_message(message.chat.id, 'Введи своё имя 👾')
     bot.register_next_step_handler(message, user_name)
+
 
 #При старте попросит ввести имя
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -61,11 +63,15 @@ def validate_russian(text):
 def check_user_exists(name, surname, password):
     conn = sqlite3.connect('bd.sql')
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE name = ? AND surname = ? AND pass = ?", (name, surname, password))
+    if password:
+        cur.execute("SELECT * FROM users WHERE name = ? AND surname = ? AND pass = ?", (name, surname, password))
+    else:
+        cur.execute("SELECT * FROM users WHERE name = ? AND surname = ?", (name, surname))
     user = cur.fetchone()
     cur.close()
     conn.close()
     return user is not None
+
 
 #Сохраняет данные пользователя (имя, фамилию, пароль) в базе данных
 #^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -104,10 +110,14 @@ def auth_enter_surname(message, name):
     surname = message.text.strip()
 
     # Проверяем введенную фамилию
-    
     if not validate_russian(surname):
         bot.reply_to(message, 'Фамилия может содержать только русские буквы. Попробуй еще раз.')
         bot.register_next_step_handler(message, auth_enter_surname, name)
+        return
+
+    # Проверка наличия пользователя в базе данных
+    if not check_user_exists(name, surname, ''):
+        bot.send_message(message.chat.id, 'Пользователь не найден. Попробуй еще раз. 🚫')
         return
 
     # Шаг 3: Запрос пароля пользователя
