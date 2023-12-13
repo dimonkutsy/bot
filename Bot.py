@@ -5,13 +5,6 @@ from telebot import types
 
 bot = telebot.TeleBot('6453843079:AAFHVRXmYAKhssF8INHw6h4WfQ1eZv9pu_I')
 
-import telebot
-import sqlite3
-import re
-from telebot import types
-
-bot = telebot.TeleBot('6453843079:AAFHVRXmYAKhssF8INHw6h4WfQ1eZv9pu_I')
-
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
