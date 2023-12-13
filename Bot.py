@@ -106,17 +106,15 @@ def auth_enter_surname(message, name):
     bot.register_next_step_handler(message, auth_enter_password, name, surname)
 
 def auth_enter_password(message, name, surname):
-
-    if check_user_exists(name, surname,):
+    password = message.text.strip()
+    if check_user_exists(name, surname):
         password_from_db = get_user_password(name, surname)
-        if password_from_db == get_user_password():
-            bot.send_message(message.chat.id, 'Аутентификация успешна! 👍')
-            # Устанавливаем значение logged_in в 1 для пользователя
-            set_logged_in(name, surname, 1)
+        bot.send_message(message.chat.id, 'Аутентификация успешна! 👍')
+        # Устанавливаем значение logged_in в 1 для пользователя
+        set_logged_in(name, surname, 1)
         
-        else :
-            bot.send_message(message.chat.id, 'Неверный пароль. Попробуй еще раз. 🚫')
-
+    else:
+        bot.send_message(message.chat.id, 'Неверный пароль. Попробуй еще раз. 🚫')
 
 def get_user_password(name, surname):
     conn = sqlite3.connect('bd.sql')
@@ -127,7 +125,6 @@ def get_user_password(name, surname):
     conn.close()
     if row:
         return row[0]
-    
     return None
 
 def set_logged_in(name, surname, value):
