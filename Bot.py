@@ -4,14 +4,22 @@ import re
 from telebot import types
 
 bot = telebot.TeleBot('6453843079:AAFHVRXmYAKhssF8INHw6h4WfQ1eZv9pu_I')
+registered_users = {}
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
-    keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-    button_login = telebot.types.KeyboardButton('Войти')
-    button_register = telebot.types.KeyboardButton('Зарегистрироваться')
-    keyboard.add(button_login, button_register)
-    bot.send_message(message.chat.id, 'Выберите действие:', reply_markup=keyboard)
+    user_id = message.from_user.id
+    if user_id in registered_users:
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+        button_logout = telebot.types.KeyboardButton('Выйти')
+        keyboard.add(button_logout)
+        bot.send_message(message.chat.id, 'Вы уже авторизованы. 👍', reply_markup=keyboard)
+    else:
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+        button_login = telebot.types.KeyboardButton('Войти')
+        button_register = telebot.types.KeyboardButton('Зарегистрироваться')
+        keyboard.add(button_login, button_register)
+        bot.send_message(message.chat.id, 'Выберите действие:', reply_markup=keyboard)
 
 @bot.message_handler(commands=['reg'])
 @bot.message_handler(func=lambda message: message.text.lower() == "зарегистрироваться")
@@ -49,7 +57,7 @@ def user_surname(message, name):
 def user_pass(message, name, surname):
     password = message.text.strip()
     save_user_data_pass(name, surname, password)
-    bot.send_message(message.chat.id, 'Регистрация успешна!')
+    bot.send_message(message.chat.id, 'Вы зарегистрированы!')
 
 def validate_russian(text):
     return bool(re.match(r'^[а-яА-ЯёЁ\s]+$', text))
@@ -98,12 +106,15 @@ def auth_enter_surname(message, name):
     bot.send_message(message.chat.id, 'Теперь введите пароль 🔐')
     bot.register_next_step_handler(message, auth_enter_password, name, surname)
 
-
 def auth_enter_password(message, name, surname):
     password = message.text.strip()
     if check_password(name, surname, password):
-        bot.send_message(message.chat.id, 'Аутентификация успешна! 👍')
+        registered_users[message.from_user.id] = {'name': name, 'surname': surname}
         set_logged_in(name, surname, 1)
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
+        button_logout = telebot.types.KeyboardButton('Выйти')
+        keyboard.add(button_logout)
+        bot.send_message(message.chat.id, 'Вы успешно вошли в аккаунт! 😊', reply_markup=keyboard)
     else:
         bot.send_message(message.chat.id, 'Неверный пароль. Попробуй еще раз. 🚫')
 
@@ -116,7 +127,6 @@ def check_password(name, surname, password):
     conn.close()
     return user is not None
 
-
 def set_logged_in(name, surname, value):
     conn = sqlite3.connect('bd.sql')
     cur = conn.cursor()
@@ -127,41 +137,18 @@ def set_logged_in(name, surname, value):
 
 @bot.message_handler(func=lambda message: message.text.lower() == "выйти")
 def handle_logout(message):
-    name = get_user_name(message)
-    surname = get_user_surname(message)
-    if name and surname:
+    user_id = message.from_user.id
+    if user_id in registered_users:
+        name = registered_users[user_id]['name']
+        surname = registered_users[user_id]['surname']
+        registered_users.pop(user_id)  # Удаляем пользователя из словаря
         set_logged_in(name, surname, 0)
-        bot.send_message(message.chat.id, 'Вы успешно вышли из аккаунта. 👋')
+        keyboard = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+        button_login = telebot.types.KeyboardButton('Войти')
+        button_register = telebot.types.KeyboardButton('Зарегистрироваться')
+        keyboard.add(button_login, button_register)
+        bot.send_message(message.chat.id, 'Вы успешно вышли из аккаунта. 👋', reply_markup=keyboard)
     else:
         bot.send_message(message.chat.id, 'Чтобы выйти из аккаунта, сначала войдите в него.')
 
-def get_user_name(message):
-    conn = sqlite3.connect('bd.sql')
-    cur = conn.cursor()
-    cur.execute("SELECT name FROM users WHERE logged_in = 1")
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-    if row:
-        return row[0]
-    return None
-
-def get_user_surname(message):
-    conn = sqlite3.connect('bd.sql')
-    cur = conn.cursor()
-    cur.execute("SELECT surname FROM users WHERE logged_in = 1")
-    row = cur.fetchone()
-    cur.close()
-    conn.close()
-    if row:
-        return row[0]
-    return None
-
 bot.polling(none_stop=True)
-
-#while True:
-#    try:
-#        bot.polling(none_stop=True)
-#    except Exception as e:
-#        print(e)
-#        continue
